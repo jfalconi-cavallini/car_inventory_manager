@@ -182,6 +182,5 @@ if __name__ == '__main__':
         replace_existing=True
     )
     atexit.register(lambda: scheduler.shutdown())
-
     app.run(debug=True)
  
