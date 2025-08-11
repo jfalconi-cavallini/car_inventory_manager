@@ -118,7 +118,7 @@ def get_total_pages(url):
     return max(page_numbers) if page_numbers else 1
 
 def scrape_all_new_cars(base_url):
-    total_pages = 1  # static for now
+    total_pages = 30 #get_total_pages(base_url)  # static for now
     print(f"Total pages found: {total_pages}")
 
     all_cars = []
