@@ -176,7 +176,7 @@ if __name__ == '__main__':
     scheduler.start()
     scheduler.add_job(
         func=scheduled_scrape,
-        trigger=IntervalTrigger(hour=1),  # every 1 hour
+        trigger=IntervalTrigger(hours=1),  # every 1 hour
         id='scrape_job',
         name='Scrape car data every hour',
         replace_existing=True
