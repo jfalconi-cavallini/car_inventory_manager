@@ -5,6 +5,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 import atexit
 import json
 import scraper  # your scraper.py module
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
