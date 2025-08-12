@@ -10,8 +10,8 @@ import os
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
 app.config['SECRET_KEY'] = 'your-secret-key'
-
 db = SQLAlchemy(app)
+
 
 # Car model with VIN, image_url, and listing link added
 class Car(db.Model):
@@ -26,6 +26,8 @@ class Car(db.Model):
     image_url = db.Column(db.String(255), nullable=True)         # Image URL field
     link = db.Column(db.String(500), nullable=True)              # Listing link
 
+
+#routes 
 @app.route('/', methods=['GET', 'POST'])
 def home():
     search = request.args.get('search')
@@ -82,51 +84,7 @@ def edit_car(car_id):
         return redirect(url_for('home'))
     return render_template('edit_car.html', car=car)
 
-@app.route('/upload_scraped_cars', methods=['POST'])
-def upload_scraped_cars():
-    filename = 'scraped_cars.json'
-    try:
-        with open(filename, 'r') as f:
-            cars = json.load(f)
-    except FileNotFoundError:
-        flash("Scraped data file not found. Please run the scraper first.", 'error')
-        return redirect(url_for('home'))
 
-    count_added = 0
-    for car_data in cars:
-        vin = car_data.get('vin')
-        if vin:
-            existing_car = Car.query.filter_by(vin=vin).first()
-        else:
-            existing_car = Car.query.filter_by(
-                make=car_data['make'], 
-                model=car_data['model'], 
-                year=int(car_data['year']) if str(car_data['year']).isdigit() else 0
-            ).first()
-
-        if existing_car:
-            continue
-
-        price = float(car_data.get('price', 0.0))
-        mileage = int(car_data.get('mileage', 0))
-
-        new_car = Car(
-            make=car_data['make'],
-            model=car_data['model'],
-            year=int(car_data['year']) if str(car_data['year']).isdigit() else 0,
-            price=price,
-            mileage=mileage,
-            status='available',
-            vin=vin,
-            image_url=car_data.get('image_url'),
-            link=car_data.get('link')
-        )
-        db.session.add(new_car)
-        count_added += 1
-
-    db.session.commit()
-    flash(f"Successfully uploaded {count_added} cars from scraped data!", 'success')
-    return redirect(url_for('home'))
 
 def scheduled_scrape():
     with app.app_context():
@@ -169,21 +127,27 @@ def scheduled_scrape():
         db.session.commit()
         print(f"Scheduled scraping complete: {count_added} new cars added.")
 
-if __name__ == '__main__':
+
+#main code
+if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
+    
+    #initialize scheduler
     scheduler = BackgroundScheduler()
     scheduler.start()
+
+    # Add the job to run scheduled_scrape every 1 hour (you can adjust this)
     scheduler.add_job(
         func=scheduled_scrape,
-        trigger=IntervalTrigger(hours=1),  # every 1 hour
+        trigger=IntervalTrigger(hours=24),  # every 1 hour
         id='scrape_job',
         name='Scrape car data every hour',
         replace_existing=True
     )
+
+    # Shut down the scheduler when exiting the app
     atexit.register(lambda: scheduler.shutdown())
 
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
- 
+
+    app.run(host="0.0.0.0", port=8080)
